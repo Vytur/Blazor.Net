@@ -1,6 +1,6 @@
 namespace CryptoAPI
 {
-    public class WeatherForecast
+    public class CryptoInfo
     {
         public DateOnly Date { get; set; }
 
