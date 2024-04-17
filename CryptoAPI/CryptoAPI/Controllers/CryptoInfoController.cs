@@ -15,7 +15,8 @@ namespace CryptoAPI.Controllers
             _config = config;
         }
 
-        [HttpGet(Name = "GetCryptos")]
+        [HttpGet]
+        [Route("GetCryptos")]
         public JsonResult GetCryptos()
         {
             string query = "select * from dbo.cryptos";
@@ -38,7 +39,8 @@ namespace CryptoAPI.Controllers
             return new JsonResult(table);
         }
 
-        [HttpPost(Name = "AddCryptos")]
+        [HttpPost]
+        [Route("AddCryptos")]
         public JsonResult AddCryptos([FromForm] string newName, [FromForm] string newShortcut)
         {
             string query = "insert into dbo.cryptos values(@newName, @newShortcut)";
@@ -63,7 +65,8 @@ namespace CryptoAPI.Controllers
             return new JsonResult("Added Successfully");
         }
 
-        [HttpDelete(Name = "DeleteCryptos")]
+        [HttpDelete]
+        [Route("DeleteCryptos")]
         public JsonResult DeleteCryptos(int id)
         {
             string query = "delete from dbo.cryptos where id=@id";

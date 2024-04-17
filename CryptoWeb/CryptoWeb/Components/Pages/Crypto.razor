@@ -1,0 +1,95 @@
+﻿@page "/crypto"
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+@using System.Text.Json
+@inject IJSRuntime JsRuntime;
+
+<PageTitle>Crypto</PageTitle>
+
+<h1>Crypto</h1>
+
+<p>
+    <input @bind ="newCoins"/>&nbsp;
+    <input @bind="newCoinsShort" />&nbsp;
+    <button @onclick = "addNewCrypto">Add crypto</button>
+</p>
+
+@if (cryptos == null || cryptos.Count() == 0)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Initials</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var crypto in cryptos)
+            {
+                <tr>
+                    <td>@crypto.name</td>
+                    <td>@crypto.shortcut</td>
+                    <td><button @onclick="(()=>deleteCrypto(crypto.id))">Delete</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    string newCoins = "";
+    string newCoinsShort = "";
+
+    string API_URL = "http://localhost:5138/CryptoInfo/";
+
+    IEnumerable<Cryptos>? cryptos = Array.Empty<Cryptos>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        HttpClient httpClient = new HttpClient();
+        HttpResponseMessage response = await httpClient.GetAsync(API_URL + "GetCryptos");
+        httpClient.Dispose();
+        using var responseStream = await response.Content.ReadAsStreamAsync();
+        cryptos = await JsonSerializer.DeserializeAsync<IEnumerable<Cryptos>>(responseStream);
+    }
+
+    private class Cryptos
+    {
+        public int id { get; set; }
+        public string name { get; set; }
+        public string shortcut { get; set; }
+    }
+
+    protected async Task addNewCrypto()
+    {
+        var formData = new MultipartFormDataContent();
+        formData.Add(new StringContent(newCoins), "newName");
+        formData.Add(new StringContent(newCoinsShort), "newShortcut");
+        HttpClient httpClient = new HttpClient();
+        HttpResponseMessage response = await httpClient.PostAsync(API_URL + "AddCryptos", formData);
+        httpClient.Dispose();
+        using var responseStream = await response.Content.ReadAsStreamAsync();
+
+        string res = response.Content.ReadAsStringAsync().Result;
+        await JsRuntime.InvokeVoidAsync("alert", res);
+        await this.OnInitializedAsync();
+    }
+
+    protected async Task deleteCrypto(int id)
+    {
+        HttpClient httpClient = new HttpClient();
+        HttpResponseMessage response = await httpClient.DeleteAsync(API_URL + "DeleteCryptos?id=" + id);
+        httpClient.Dispose();
+        using var responseStream = await response.Content.ReadAsStreamAsync();
+
+        string res = response.Content.ReadAsStringAsync().Result;
+        await JsRuntime.InvokeVoidAsync("alert", res);
+        await this.OnInitializedAsync();
+    }
+}
